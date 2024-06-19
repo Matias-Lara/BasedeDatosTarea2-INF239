@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Usuario {
+  id             Int         @id @default(autoincrement())
+  nombre         String
+  correo         String      @unique
+  clave          String
+  descripcion    String?
+  favoritos      Favorito[]
+  correos_env    Correo[]    @relation("CorreosEnviados")
+  correos_rec    Correo[]    @relation("CorreosRecibidos")
+  bloqueados     Bloqueado[] @relation("BloqueadosPorUsuario")
+
+  fecha_creacion DateTime    @default(now())
+}
+
+
+model Correo {
+  id          Int     @id @default(autoincrement())
+  remitenteId Int
+  remitente   Usuario @relation("CorreosEnviados", fields: [remitenteId], references: [id])
+
+  destinatarioId Int
+  destinatario   Usuario    @relation("CorreosRecibidos", fields: [destinatarioId], references: [id])
+  asunto         String?
+  contenido      String?
+  Favorito       Favorito[]
+
+  fecha          DateTime   @default(now())
+}
+
+
+model Favorito {
+  @@id([usuarioId, correoId])
+  
+  usuarioId Int
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  correoId Int
+  correo   Correo   @relation(fields: [correoId], references: [id])
+
+  fechaAgregado     DateTime   @default(now())
+}
+
+
+model Bloqueado {
+  id              Int      @id @default(autoincrement())
+  usuario         Usuario  @relation("BloqueadosPorUsuario", fields: [usuarioId], references: [id])
+  usuarioId       Int
+  correoBloqueado String   @unique
+  
+  fechaBloqueo    DateTime @default(now())
+}
