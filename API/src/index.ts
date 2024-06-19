@@ -19,15 +19,37 @@ app.get('/api/registrar', () => {
 })
 
 
+// Registra los usuarios
 app.post('/api/registrar', async ({body}) => {
     try{
         const {nombre, correo, clave} = await body as User;
-        const newUser = await prisma.usuario.create({data: body as User});
-        return{
-            estado: 201,
-            mensaje: `El correo se ha registrado correctamente`
-        };
-        
+
+        if (nombre && correo && clave){
+            const registrado = await prisma.usuario.findUnique({where: {correo}})
+           
+            if (registrado){
+                console.log(`El correo ${correo} ya se encuentra registrado`);
+                return{
+                    estado: 409,
+                    mensaje: `El correo ya está registrado`
+                };
+
+            } else {
+                const newUser = await prisma.usuario.create({data: body as User});
+                return{
+                    estado: 201,
+                    mensaje: `El correo se ha registrado correctamente`
+                }
+            }
+
+        } else {
+            console.log('Credenciales incorrectas')
+            return {
+                estado: 400,
+                mensaje: "Usuario y/o correo incorrectos"
+                
+            };
+        }
     } catch (err){
         console.log(`Error al intentar registrar el usuario: ${(err as Error).message}`);
         return {
@@ -35,10 +57,6 @@ app.post('/api/registrar', async ({body}) => {
         mensaje: 'Ha existido un error al realizar la peticion'
         };
     }
-});
-
-app.listen(3000, () => {
-    console.log('🦊 Elysia is running on http://localhost:3000');
 });
 
 
