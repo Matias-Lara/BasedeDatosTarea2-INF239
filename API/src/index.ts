@@ -77,6 +77,55 @@ app.post('/api/registrar', async ({body}) => {
     }
 });
 
+// Bloquea los usuarios
+app.post('/api/bloquear', async ({body}) => {
+    try {
+        const {correo, clave, correo_bloquear} = body as Bloquear;
+        const personaje = await prisma.usuario.findUnique({ where: {correo}});
+
+        if (personaje && clave && personaje.clave === clave) {
+            const bloqueillo = await prisma.bloqueado.findFirst({
+                where: { correoBloqueado: correo_bloquear }});
+
+            if (bloqueillo) {
+                console.log(`El correo ${correo_bloquear} ya está bloqueado`);
+                return {
+                    estado: 409,
+                    mensaje: 'El correo ya ha sido bloqueado por un administrador'
+                }; 
+
+            } else {
+                await prisma.bloqueado.create({
+                    data: {
+                        usuarioId: personaje.id,
+                        correoBloqueado: correo_bloquear
+                    }
+                });
+    
+                console.log(`Usuario ${correo_bloquear} bloqueado por ${correo}`);
+                return {
+                    estado: 201,
+                    mensaje: 'Usuario bloqueado con éxito'
+                };
+            }
+
+        } else {
+            console.log(`Credenciales incorrectas`);
+            return {
+                estado: 401,
+                mensaje: 'Usuario y/o correo a bloquear incorrectos'
+            };
+        }
+
+    } catch (err) {
+        console.log(`Error al intentar bloquear usuario: ${(err as Error).message}`);
+        return {
+            estado: 500,
+            mensaje: 'Ha existido un error al intentra bloquear el correo'
+        };
+    }
+});
+
 
 // Obtiene la informacion de un usuario a traves de su correo 
 app.get('/api/informacion/:correo', async ({params}) => {
@@ -110,6 +159,7 @@ app.get('/api/informacion/:correo', async ({params}) => {
 });
 
 
+// Marcar un correo como favorito
 app.post('/api/marcarcorreo', async ({body}) => {
     try {
         const {correo, clave, id_correo_favorito} = body as Marcar;
@@ -147,7 +197,7 @@ app.post('/api/marcarcorreo', async ({body}) => {
 });
 
 
-
+// Desmarcar un correo de favorito.
 app.delete('/api/desmarcarcorreo', async ({body}) => {
     try {
         const {correo, clave, id_correo_favorito} = body as Desmarcar;
