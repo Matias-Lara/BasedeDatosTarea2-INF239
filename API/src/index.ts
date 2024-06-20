@@ -160,25 +160,44 @@ app.get('/api/informacion/:correo', async ({params}) => {
 
 
 // Marcar un correo como favorito
-app.post('/api/marcarcorreo', async ({body}) => {
+app.post('/api/marcarcorreo', async ({ body }) => {
     try {
         const {correo, clave, id_correo_favorito} = body as Marcar;
         const usuario = await prisma.usuario.findUnique({ where: {correo} });
 
         if (usuario && id_correo_favorito && usuario.clave === clave) {
-            await prisma.favorito.create({
-                data: {
-                    usuarioId: usuario.id,
-                    correoId: id_correo_favorito
-                }
-            });
 
-            console.log(`El correo se ha guardado como favorito exitosamente`);
-            return {
-                estado: 201,
-                mensaje: "Correo marcado como favorito"
-            };
-             
+            const correillo = await prisma.correo.findUnique({
+                where: {id: id_correo_favorito}});
+
+            if (!correillo) {
+                console.log('No se ha encontrado el correo');
+                return {
+                    estado: 404,
+                    mensaje: 'No se ha encontrado el correo'
+                };
+            }
+            
+            if (correillo.remitenteId === usuario.id || correillo.destinatarioId === usuario.id){
+                await prisma.favorito.create({
+                    data: {
+                        usuarioId: usuario.id,
+                        correoId: id_correo_favorito
+                    }
+                });
+                console.log(`El correo se ha guardado como favorito exitosamente`);
+                return {
+                    estado: 201,
+                    mensaje: "Correo marcado como favorito"
+                };
+            } else {
+                console.log(`El usuario no es el remitente ni destinatario`);
+                return {
+                    estado: 403,
+                    mensaje: "Operacion fallida, el correo que intentas marcar no te pertenece"
+                };
+            }
+
         } else {
             console.log(`Credenciales incorrectas`);
             return {
@@ -197,25 +216,46 @@ app.post('/api/marcarcorreo', async ({body}) => {
 });
 
 
+
 // Desmarcar un correo de favorito.
-app.delete('/api/desmarcarcorreo', async ({body}) => {
+app.delete('/api/desmarcarcorreo', async ({ body }) => {
     try {
         const {correo, clave, id_correo_favorito} = body as Desmarcar;
         const usuario = await prisma.usuario.findUnique({ where: {correo} });
 
         if (usuario && id_correo_favorito && usuario.clave === clave) {
-            await prisma.favorito.deleteMany({
-                where: {
-                    usuarioId: usuario.id,
-                    correoId: id_correo_favorito
-                }
-            });
+            const correillo = await prisma.correo.findUnique({
+                where: {id: id_correo_favorito}});
 
-            console.log(`El correo se ha quitado de favoritos con exito`);
-            return {
-                estado: 200,
-                mensaje: "El correo se ha quitado de favoritos"
-            };
+            if (!correillo) {
+                console.log('No se ha encontrado el correo');
+                return {
+                    estado: 404,
+                    mensaje: 'No se ha encontrado el correo'
+                };
+            }
+            
+            if (correillo.remitenteId === usuario.id || correillo.destinatarioId === usuario.id){
+                await prisma.favorito.deleteMany({
+                    where: {
+                        usuarioId: usuario.id,
+                        correoId: id_correo_favorito
+                    }
+                });
+
+                console.log(`El correo se ha quitado de favoritos con exito`);
+                return {
+                    estado: 200,
+                    mensaje: "El correo se ha quitado de favoritos"
+                };
+
+            } else {
+                console.log(`El usuario no es el remitente ni destinatario`);
+                return {
+                    estado: 403,
+                    mensaje: 'Operacion fallida, el correo que intentas desmarcar no te pertenece'
+                };
+            }
 
         } else {
             console.log(`Credenciales incorrectas`);
