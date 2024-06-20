@@ -13,6 +13,24 @@ interface User {
     descripcion?: string
 }
 
+interface Bloquear{
+    correo:         string   
+    clave:          string
+    correo_bloquear:string
+}
+
+interface Marcar{
+    correo:         string   
+    clave:          string
+    id_correo_favorito: number
+}
+
+interface Desmarcar{
+    correo:         string   
+    clave:          string
+    id_correo_favorito: number
+}
+
 
 app.get('/api/registrar', () => {
     return prisma.usuario.findMany()
@@ -90,6 +108,83 @@ app.get('/api/informacion/:correo', async ({params}) => {
         };
     }
 });
+
+
+app.post('/api/marcarcorreo', async ({body}) => {
+    try {
+        const {correo, clave, id_correo_favorito} = body as Marcar;
+        const usuario = await prisma.usuario.findUnique({ where: {correo} });
+
+        if (usuario && id_correo_favorito && usuario.clave === clave) {
+            await prisma.favorito.create({
+                data: {
+                    usuarioId: usuario.id,
+                    correoId: id_correo_favorito
+                }
+            });
+
+            console.log(`El correo se ha guardado como favorito exitosamente`);
+            return {
+                estado: 201,
+                mensaje: "Correo marcado como favorito"
+            };
+             
+        } else {
+            console.log(`Credenciales incorrectas`);
+            return {
+                estado: 401,
+                mensaje: 'Usuario y/o correo incorrectos'
+            };
+        }
+
+    } catch (err) {
+        console.log(`Error al intentar marcar correo como favorito: ${(err as Error).message}`)
+        return {
+            estado: 400,
+            mensaje: 'Ha ocurrido un error al intentar marcar como favorito'
+        };
+    }
+});
+
+
+
+app.delete('/api/desmarcarcorreo', async ({body}) => {
+    try {
+        const {correo, clave, id_correo_favorito} = body as Desmarcar;
+        const usuario = await prisma.usuario.findUnique({ where: {correo} });
+
+        if (usuario && id_correo_favorito && usuario.clave === clave) {
+            await prisma.favorito.deleteMany({
+                where: {
+                    usuarioId: usuario.id,
+                    correoId: id_correo_favorito
+                }
+            });
+
+            console.log(`El correo se ha quitado de favoritos con exito`);
+            return {
+                estado: 200,
+                mensaje: "El correo se ha quitado de favoritos"
+            };
+
+        } else {
+            console.log(`Credenciales incorrectas`);
+            return {
+                estado: 401,
+                mensaje: 'Usuario y/o correo incorrectos'
+            };
+        }
+        
+    } catch (err) {
+        console.log(`Error al intentar quitar correo de favoritos: ${(err as Error).message}`);
+        return {
+            estado: 500,
+            mensaje: 'Ha ocurrido un error al intentar quitar correo de favorito'
+        };
+    }
+});
+
+
 
 app.listen(3000, () => {
     console.log('🦊 Elysia is running on http://localhost:3000');
