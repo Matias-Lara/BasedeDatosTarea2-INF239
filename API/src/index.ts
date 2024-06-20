@@ -60,3 +60,37 @@ app.post('/api/registrar', async ({body}) => {
 });
 
 
+// Obtiene la informacion de un usuario a traves de su correo 
+app.get('/api/informacion/:correo', async ({params}) => {
+    try {
+        const {correo} = params;
+        const usuario = await prisma.usuario.findUnique({
+            where: {correo}, select: {nombre: true, correo: true, descripcion: true}});
+
+        if (usuario) {
+            console.log(`Se ha hecho una consulta de informacion al ${correo}`);
+            return {
+                estado: 200,
+                usuario
+            };
+
+        } else {
+            console.log(`Consulta fallida de información del correo ${correo}`);
+            return {
+                estado: 404,
+                mensaje: 'Usuario no encontrado'
+            };
+        }
+
+    } catch (err) {
+        console.log(`Error al consultar información: ${(err as Error).message}`)
+        return {
+            estado: 500,
+            mensaje: 'Ha existido un error al realizar la petición'
+        };
+    }
+});
+
+app.listen(3000, () => {
+    console.log('🦊 Elysia is running on http://localhost:3000');
+});
