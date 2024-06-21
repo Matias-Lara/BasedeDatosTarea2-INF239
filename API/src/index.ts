@@ -38,6 +38,12 @@ interface CrearCorreo {
     contenido?: string;
 }
 
+interface Login {
+    correo:       string   
+    clave:        string
+}  
+
+
 interface VerFavoritos {
     correo:       string   
     clave:        string
@@ -289,6 +295,30 @@ app.delete('/api/desmarcarcorreo', async ({ body }) => {
 app.get('/api/registrar', () => {
     return prisma.usuario.findMany()
 })
+
+
+// Verifica si el usuario tiene cuenta.
+app.post('/api/login', async ({body}) => {
+    try{
+        const {correo, clave} = body as Login;
+        const verificar = await prisma.usuario.findUnique({where: {correo}})
+
+        if (verificar && verificar.clave === clave) {
+            return {
+                estado: 200,
+            };
+        } else {
+            return {
+                estado: 401
+            };
+    }} catch (err){
+        console.log(`Error al intentar verificar el usuario: ${err as Error}.message}`);
+        return {
+        estado: 500,
+        mensaje: 'Ha existido un error al realizar la peticion'
+        };
+    }
+});
 
   
 // Crea correos dentro de la base de datos, se le entrega por parametros los atributos del correo.
