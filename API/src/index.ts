@@ -31,6 +31,17 @@ interface Desmarcar{
     id_correo_favorito: number
 }
 
+interface CrearCorreo {
+    remitenteId: number;
+    destinatarioId: number;
+    asunto?: string;
+    contenido?: string;
+}
+
+interface VerFavoritos {
+    correo:       string   
+    clave:        string
+} 
 
 app.get('/api/registrar', () => {
     return prisma.usuario.findMany()
@@ -274,7 +285,38 @@ app.delete('/api/desmarcarcorreo', async ({ body }) => {
     }
 });
 
+// Encuentra todos los registros de usuario.
+app.get('/api/registrar', () => {
+    return prisma.usuario.findMany()
+})
 
+  
+// Crea correos dentro de la base de datos, se le entrega por parametros los atributos del correo.
+app.post('/api/correos', async ({body}) => {
+    try {
+        const {remitenteId, destinatarioId, asunto, contenido} = body as CrearCorreo;
+
+        const nuevoCorreo = await prisma.correo.create({
+            data: {
+                remitenteId: remitenteId,
+                destinatarioId: destinatarioId,
+                asunto: asunto,
+                contenido: contenido,
+            }
+        });
+
+        return {
+            estado: 201,
+            mensaje: "Correo creado con éxito",
+            correo: nuevoCorreo
+        };
+    } catch (err) {
+        return {
+            estado: 500,
+            mensaje: 'Ha existido un error al realizar la petición'
+        };
+    }
+});
 
 app.listen(3000, () => {
     console.log('🦊 Elysia is running on http://localhost:3000');
