@@ -348,6 +348,52 @@ app.post('/api/correos', async ({body}) => {
     }
 });
 
+// Muestra los correos favoritos del usuario, la respuesta depende si hay correos o no como favoritos.
+app.post('/api/verfavoritos', async ({ body }) => {
+    try {
+        const {correo, clave} = body as VerFavoritos;
+        const usuario = await prisma.usuario.findUnique({ where: {correo}});
+
+        if (usuario && usuario.clave === clave) {
+            const correillos = await prisma.favorito.findMany({
+                where: {usuarioId: usuario.id},
+                include: {correo: true}
+            });
+            
+            if (correillos.length === 0) {
+                console.log('No se encontraron correos favoritos');
+                return {
+                    estado: 200,
+                    mensaje: 'No tienes correos favoritos',
+                    correillos
+                };
+
+            } else {
+                console.log(`Consulta de correo favoritos exitosa`);
+                return {
+                    estado: 200,
+                    mensaje: 'Estos son tus correos favoritos',
+                    correillos
+                };
+            }
+            
+        } else {
+            console.log('Credenciales incorrectas');
+            return {
+                estado: 401,
+                mensaje: 'Usuario y/o clave incorrectos'
+            };
+        }
+
+    } catch (err) {
+        console.log(`Error al intentar consultar los favoritos: ${(err as Error).message}`);
+        return {
+            estado: 500,
+            mensaje: 'Ha existido un error al realizar la petición'
+        };
+    }
+});
+
 app.listen(3000, () => {
     console.log('🦊 Elysia is running on http://localhost:3000');
 });
