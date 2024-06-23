@@ -1,0 +1,3 @@
+Jose Meza       202204041-6
+Martin Chacon   202023012-9
+Matias Lara     202204030-0
