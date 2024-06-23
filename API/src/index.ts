@@ -1,9 +1,10 @@
 import {Elysia} from "elysia";
 import {PrismaClient} from "@prisma/client";
 
-
 const prisma = new PrismaClient();
 const app = new Elysia();
+
+//interfaces que se piden explicito en la tarea.
 
 interface User {
     id?:          number
@@ -23,6 +24,7 @@ interface Marcar{
     correo:         string   
     clave:          string
     id_correo_favorito: number
+
 }
 
 interface Desmarcar{
@@ -30,6 +32,9 @@ interface Desmarcar{
     clave:          string
     id_correo_favorito: number
 }
+
+
+//Interfaces extra para probar el codigo.
 
 interface CrearCorreo {
     remitenteId: number;
@@ -43,16 +48,13 @@ interface Login {
     clave:        string
 }  
 
-
 interface VerFavoritos {
     correo:       string   
     clave:        string
 } 
 
-app.get('/api/registrar', () => {
-    return prisma.usuario.findMany()
-})
 
+//Endpoint que se piden explicito en el trabajo 
 
 // Registra los usuarios
 app.post('/api/registrar', async ({body}) => {
@@ -74,15 +76,14 @@ app.post('/api/registrar', async ({body}) => {
                 return{
                     estado: 201,
                     mensaje: `El correo se ha registrado correctamente`
-                }
+                };
             }
 
         } else {
             console.log('Credenciales incorrectas')
             return {
                 estado: 400,
-                mensaje: "Usuario y/o correo incorrectos"
-                
+                mensaje: "Usuario y/o correo incorrectos"  
             };
         }
     } catch (err){
@@ -93,6 +94,7 @@ app.post('/api/registrar', async ({body}) => {
         };
     }
 });
+
 
 // Bloquea los usuarios
 app.post('/api/bloquear', async ({body}) => {
@@ -291,11 +293,14 @@ app.delete('/api/desmarcarcorreo', async ({ body }) => {
     }
 });
 
+
+//Endpoints extra para probar el codigo
+
+
 // Encuentra todos los registros de usuario.
 app.get('/api/registrar', () => {
     return prisma.usuario.findMany()
 })
-
 
 // Verifica si el usuario tiene cuenta.
 app.post('/api/login', async ({body}) => {
@@ -319,7 +324,6 @@ app.post('/api/login', async ({body}) => {
         };
     }
 });
-
   
 // Crea correos dentro de la base de datos, se le entrega por parametros los atributos del correo.
 app.post('/api/correos', async ({body}) => {
@@ -393,6 +397,7 @@ app.post('/api/verfavoritos', async ({ body }) => {
         };
     }
 });
+
 
 app.listen(3000, () => {
     console.log('🦊 Elysia is running on http://localhost:3000');
